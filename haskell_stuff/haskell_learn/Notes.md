@@ -24,6 +24,27 @@
 - putStrLn function prints a string
 - In Haskell a string is a list of characters, so the list operators can be used
 - Rational numbers in Haskell are constructed by (%) operator, with the numerator on the left and denominator on the right
+# Why care about types
+- Every expression and function in Haskell has a type
+- Types are an abstraction layer that adds meaning for bytes
+- Types in Haskell are strong, static and *can* be automatically inferred
+- Casting must be explicit
+# Some basic types
+- Char
+- Bool
+- Int
+- Integer
+- Double
+- To explicitly specify the type: var :: Type | :: + type is called *type signature*
+- Tuples: Fixed-size collection of values, where each value can have a different type
+- In Haskell, function application is left associative
+- Pure functions don't have side effects, while impure functions do
+- Impure functions results will begin with IO
+- Haskell does not have a return keyword
+- In Haskell, variables don't change (they are a name for a particular expression)
+- Indentation is important
 --- 
 # References:
 1. [What's the difference between the classes Floating and Fractional in Haskell?](https://stackoverflow.com/questions/41964228/whats-the-difference-between-the-classes-floating-and-fractional-in-haskell)
+2. [How to throw an exception and exit the program in Haskell?](https://stackoverflow.com/questions/6070316/how-to-throw-an-exception-and-exit-the-program-in-haskell)
+3. [how to have multiple if statements in Haskell?](https://stackoverflow.com/questions/74399187/how-to-have-multiple-if-statements-in-haskell)
