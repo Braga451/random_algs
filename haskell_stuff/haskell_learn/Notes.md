@@ -43,6 +43,13 @@
 - Haskell does not have a return keyword
 - In Haskell, variables don't change (they are a name for a particular expression)
 - Indentation is important
+# Defining Types, Streamlining functions
+- The **data** keyword define a new data type
+- A type name **must** start with a capital letter (PascalCase)
+- An algebraic data type can have more than one value constructor
+- Pattern matching permits to determinate which value constructor was used, and if value constructor has data components, to extract them
+- Record syntax makes easier to work with large structures
+- 
 --- 
 # References:
 1. [What's the difference between the classes Floating and Fractional in Haskell?](https://stackoverflow.com/questions/41964228/whats-the-difference-between-the-classes-floating-and-fractional-in-haskell)
