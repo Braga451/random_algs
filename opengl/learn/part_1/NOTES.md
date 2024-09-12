@@ -39,3 +39,5 @@
 - VBO(vertex buffer objects) can store a large number of vertices in GPU's memory
 
 - EBO(element buffer object) stores indices that OpenGL uses to decide what vertices to draw (indexed drawing)
+
+- Uniforms are global
