@@ -67,11 +67,12 @@ unsigned int createShader(const std::string &shaderPath,
   return shader;
 }
 
-unsigned int returnTriangleShader(const std::string& fragmentShaderPath, unsigned int * VAO) {
+unsigned int returnTriangleShader(const std::string& fragmentShaderPath, const std::string& vertexShaderPath, unsigned int * VAO) {
   float vertices[] = {
-    -1.0f, -1.0f, 0.0f,
-    0.0f, 1.0f, 0.0f
-    , 1.0f, -1.0f, 0.0f};
+    -1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+    1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f
+  }; // The last 3 values of each row are color data
   
   glGenVertexArrays(1, VAO);
   glBindVertexArray(*VAO);
@@ -80,11 +81,17 @@ unsigned int returnTriangleShader(const std::string& fragmentShaderPath, unsigne
   glGenBuffers(1, &VBO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0);
+  
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 
+                        6 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0); // Position data
+
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 
+                        6 * sizeof(float), (void *)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1); // Color data
 
   unsigned int vertexShader =
-      createShader("../shaders/vertex_shader.glsl", GL_VERTEX_SHADER);
+      createShader(vertexShaderPath, GL_VERTEX_SHADER);
   unsigned int fragmentShader =
       createShader(fragmentShaderPath, GL_FRAGMENT_SHADER);
 
@@ -245,7 +252,9 @@ float secondRectangleVertices[] = {
   
   unsigned int VAO;
 
-  unsigned int triangleShader = returnTriangleShader("../shaders/fragment_shader_uniform_example.glsl", &VAO);
+  unsigned int triangleShader = returnTriangleShader("../shaders/fragment_shader_multicolor_example.glsl", 
+                                                     "../shaders/vertex_shader_multicolor_example.glsl", 
+                                                     &VAO);
 
   while (!glfwWindowShouldClose(w) ) {
     // std::cout << firstRectangleShader << ":" << secondRectangleShader << std::endl;
@@ -256,7 +265,8 @@ float secondRectangleVertices[] = {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    /*glUseProgram(firstRectangleShader);
+    /*
+    glUseProgram(firstRectangleShader);
     glBindVertexArray(firstVAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     
@@ -267,12 +277,6 @@ float secondRectangleVertices[] = {
     glBindVertexArray(0);  
     */
     glUseProgram(triangleShader);
-    // update the uniform color
-    float timeValue = glfwGetTime();
-    float greenValue = std::sin(timeValue) / 2.0f + 0.5f;
-    int vertexColorLocation = glGetUniformLocation(triangleShader, "ourColor");
-    glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
-    // now render the triangle
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
