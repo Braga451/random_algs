@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <cmath>
+#include <ostream>
 #include <string>
 #include "classes/Shader.hpp"
 
@@ -16,9 +17,9 @@ void processInput(GLFWwindow *window) {
 
 Shader returnTriangleShader(const std::string& fragmentShaderPath, const std::string& vertexShaderPath, unsigned int * VAO) {
   float vertices[] = {
-    -1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-    0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-    1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f
+    -1.0f/4, -1.0f/4, 0.0f, 1.0f, 0.0f, 0.0f,
+    0.0f, 1.0f/4, 0.0f, 0.0f, 1.0f, 0.0f,
+    1.0f/4, -1.0f/4, 0.0f, 0.0f, 0.0f, 1.0f
   }; // The last 3 values of each row are color data
   
   glGenVertexArrays(1, VAO);
@@ -174,6 +175,10 @@ float secondRectangleVertices[] = {
     
     */
     triangleShader.useShader();
+   
+    int offSet = glGetUniformLocation(triangleShader.getShaderId(), "offSet");
+    glUniform1f(offSet, 0.5f);
+
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     
