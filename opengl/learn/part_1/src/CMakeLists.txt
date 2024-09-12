@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 project(main)
-add_executable(main main.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/src/gl.c)
+add_executable(main main.cpp ${CMAKE_CURRENT_SOURCE_DIR}/classes/Shader.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/src/gl.c)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(glfw3 REQUIRED)

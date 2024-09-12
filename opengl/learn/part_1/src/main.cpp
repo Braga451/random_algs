@@ -1,9 +1,9 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include <fstream>
 #include <iostream>
 #include <cmath>
 #include <string>
+#include "classes/Shader.hpp"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
@@ -14,60 +14,7 @@ void processInput(GLFWwindow *window) {
     glfwSetWindowShouldClose(window, true);
 }
 
-std::string readShader(const std::string &shaderPath) {
-  std::ifstream shaderFile(shaderPath);
-
-  if (!shaderFile.is_open()) {
-    std::cerr << "Error reading shader!" << std::endl;
-    return "";
-  }
-
-  std::string shaderLine;
-  std::string shaderContent;
-
-  while (std::getline(shaderFile, shaderLine)) {
-    shaderContent += shaderLine + "\n";
-  }
-
-  shaderFile.close();
-
-  std::cout << "Shader content: " << shaderContent << std::endl;
-
-  return shaderContent;
-}
-
-unsigned int createShader(const std::string &shaderPath,
-                          const GLenum &shaderType) {
-  const std::string shaderContent = readShader(shaderPath);
-  const char *shaderContentCStr = shaderContent.c_str();
-
-  if (shaderContent == "") {
-    exit(1);
-  }
-
-  unsigned int shader = glCreateShader(shaderType);
-  glShaderSource(shader, 1, &shaderContentCStr, nullptr);
-  glCompileShader(shader);
-
-  int isCompiled;
-  char infoLog[512];
-  glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
-
-  if (!isCompiled) {
-    glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-    std::cerr << "Error compiling shader!" << std::endl;
-    std::cerr << "Error: " << std::endl << infoLog << std::endl;
-    exit(1);
-  }
-
-  else {
-    std::cout << "Shader compiled!" << std::endl;
-  }
-
-  return shader;
-}
-
-unsigned int returnTriangleShader(const std::string& fragmentShaderPath, const std::string& vertexShaderPath, unsigned int * VAO) {
+Shader returnTriangleShader(const std::string& fragmentShaderPath, const std::string& vertexShaderPath, unsigned int * VAO) {
   float vertices[] = {
     -1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
@@ -89,43 +36,18 @@ unsigned int returnTriangleShader(const std::string& fragmentShaderPath, const s
   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 
                         6 * sizeof(float), (void *)(3 * sizeof(float)));
   glEnableVertexAttribArray(1); // Color data
-
-  unsigned int vertexShader =
-      createShader(vertexShaderPath, GL_VERTEX_SHADER);
-  unsigned int fragmentShader =
-      createShader(fragmentShaderPath, GL_FRAGMENT_SHADER);
-
-  unsigned int shaderProgram = glCreateProgram();
-
-  glAttachShader(shaderProgram, vertexShader);
-  glAttachShader(shaderProgram, fragmentShader);
-  glLinkProgram(shaderProgram);
-
-  char linkedLog[512];
-  int isLinked;
-  glGetProgramiv(shaderProgram, GL_LINK_STATUS, &isLinked);
-
-  if (!isLinked) {
-    glGetProgramInfoLog(shaderProgram, 512, nullptr, linkedLog);
-
-    std::cerr << "Error linking shaders: " << std::endl
-              << linkedLog << std::endl;
-
-    exit(1);
-  } else {
-    std::cout << "Shaders linked!" << std::endl;
-  }
-
-  glDeleteShader(vertexShader);
-  glDeleteShader(fragmentShader);
   
+  Shader shaderProgram(Shader(Shader(vertexShaderPath, GL_VERTEX_SHADER), 
+                              Shader(fragmentShaderPath, GL_FRAGMENT_SHADER)));
+
   glBindVertexArray(0);
 
   return shaderProgram;
 }
 
-unsigned int returnRectangleShader(const unsigned int (&indices)[6], 
-                                   const float (&vertices)[12], 
+Shader returnRectangleShader(const unsigned int (&indices)[6], 
+                                   const float (&vertices)[12],
+                                   const std::string &vertexShaderPath,
                                    const std::string &fragmentShaderPath,
                                    unsigned int * VAO,
                                    unsigned int vertexAttribArrayIndex) {
@@ -145,38 +67,11 @@ unsigned int returnRectangleShader(const unsigned int (&indices)[6],
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-  unsigned int vertexShader =
-      createShader("../shaders/vertex_shader.glsl", GL_VERTEX_SHADER);
-  unsigned int fragmentShader =
-      createShader(fragmentShaderPath, GL_FRAGMENT_SHADER);
-
-  unsigned int shaderProgram = glCreateProgram();
-
-  glAttachShader(shaderProgram, vertexShader);
-  glAttachShader(shaderProgram, fragmentShader);
-  glLinkProgram(shaderProgram);
-
-  char linkedLog[512];
-  int isLinked;
-  glGetProgramiv(shaderProgram, GL_LINK_STATUS, &isLinked);
-
-  if (!isLinked) {
-    glGetProgramInfoLog(shaderProgram, 512, nullptr, linkedLog);
-
-    std::cerr << "Error linking shaders: " << std::endl
-              << linkedLog << std::endl;
-
-    exit(1);
-  } else {
-    std::cout << "Shaders linked!" << std::endl;
-  }
+  
+   Shader shaderProgram(Shader(Shader(vertexShaderPath, GL_VERTEX_SHADER), 
+                        Shader(fragmentShaderPath, GL_FRAGMENT_SHADER)));
   
   glBindVertexArray(0);
-
-  // std::cout << "VAO: " << VAO << std::endl;
-
-  glDeleteShader(vertexShader);
-  glDeleteShader(fragmentShader);
 
   return shaderProgram;
 }
@@ -208,7 +103,7 @@ int main() {
 
   glfwSetFramebufferSizeCallback(w, framebuffer_size_callback);
 
-  /*float firstRectangleVertices[] = {
+  float firstRectangleVertices[] = {
     -0.5f, 0.5f, 0.0f, // Top left
     -0.5f, -0.5f, 0.0f, // Bottom left
     0.0f, 0.5f, 0.0f, // Top right
@@ -235,26 +130,28 @@ float secondRectangleVertices[] = {
   unsigned int firstVAO;
   unsigned int secondVAO;
 
-  unsigned int firstRectangleShader = returnRectangleShader(firstRectangleIndices, 
+  Shader firstRectangleShader = returnRectangleShader(firstRectangleIndices, 
                                                             firstRectangleVertices, 
+                                                             "../shaders/vertex_shader.glsl",
                                                             "../shaders/fragment_shader.glsl",
                                                             &firstVAO,
                                                             0);
 
-  unsigned int secondRectangleShader = returnRectangleShader(secondRectangleIndices, 
+  Shader secondRectangleShader = returnRectangleShader(secondRectangleIndices, 
                                                              secondRectangleVertices, 
-                                                             "../shaders/second_fragment_shader.glsl",
+                                                             "../shaders/vertex_shader.glsl",
+                                                              "../shaders/second_fragment_shader.glsl",
                                                              &secondVAO,
                                                              1);
   
   glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-  */
   
-  unsigned int VAO;
+  
+  /*unsigned int VAO;
 
-  unsigned int triangleShader = returnTriangleShader("../shaders/fragment_shader_multicolor_example.glsl", 
+  Shader triangleShader = returnTriangleShader("../shaders/fragment_shader_multicolor_example.glsl", 
                                                      "../shaders/vertex_shader_multicolor_example.glsl", 
-                                                     &VAO);
+                                                     &VAO); */
 
   while (!glfwWindowShouldClose(w) ) {
     // std::cout << firstRectangleShader << ":" << secondRectangleShader << std::endl;
@@ -265,21 +162,21 @@ float secondRectangleVertices[] = {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    /*
-    glUseProgram(firstRectangleShader);
+    firstRectangleShader.useShader();
     glBindVertexArray(firstVAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     
-    glUseProgram(secondRectangleShader);
+    secondRectangleShader.useShader();
     glBindVertexArray(secondVAO);  
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     
     glBindVertexArray(0);  
-    */
-    glUseProgram(triangleShader);
+    
+    /*
+    triangleShader.useShader();
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
-
+    */
     glfwSwapBuffers(w);
     glfwPollEvents();
   }
