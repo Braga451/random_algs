@@ -5,6 +5,14 @@ layout (location = 1) in vec3 vertexColor;
 out vec3 color;
 
 void main() {
-  gl_Position = vec4(vertexPositions, 1.0f);
+  float theta = radians(180);
+  
+  mat3 rotationMatrix = mat3(
+    vec3(cos(theta), -sin(theta), 0),
+    vec3(sin(theta), cos(theta), 0),
+    vec3(0 ,0, 1)
+  );
+
+  gl_Position = vec4(vertexPositions *  rotationMatrix, 1.0f);
   color = vertexColor;
 }
