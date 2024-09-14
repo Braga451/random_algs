@@ -41,3 +41,5 @@
 - EBO(element buffer object) stores indices that OpenGL uses to decide what vertices to draw (indexed drawing)
 
 - Uniforms are global
+
+- Texture coordinates go to (0,0) to (1,1), same logic for screen coordinates but having zero as minimal

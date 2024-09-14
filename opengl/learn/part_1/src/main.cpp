@@ -4,7 +4,37 @@
 #include <cmath>
 #include <ostream>
 #include <string>
+#include <stb_image/stb_image.hpp>
 #include "classes/Shader.hpp"
+
+unsigned int createTexture(const char * texturePath, const float (&borderColor)[4]) {
+  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+  glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+  glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  
+  glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
+  
+  int width, height, channels;
+  unsigned char * textureData = stbi_load(texturePath, &width, &height, &channels, 0);
+  
+  if (textureData == nullptr) {
+    std::cerr << "Error loding texture data!" << std::endl;
+    exit(1);
+  }
+
+  unsigned int textureId;
+  glGenTextures(1, &textureId);
+  glBindTexture(GL_TEXTURE_2D, textureId);
+  
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
+  glGenerateMipmap(GL_TEXTURE_2D);
+  
+  stbi_image_free(textureData);
+  
+  return textureId;
+}
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
@@ -16,14 +46,20 @@ void processInput(GLFWwindow *window) {
 }
 
 Shader returnTriangleShader(const std::string& fragmentShaderPath, const std::string& vertexShaderPath, unsigned int * VAO) {
-  float vertices[] = {
-    -1.0f/4, -1.0f/4, 0.0f, 1.0f, 0.0f, 0.0f,
-    0.0f, 1.0f/4, 0.0f, 0.0f, 1.0f, 0.0f,
-    1.0f/4, -1.0f/4, 0.0f, 0.0f, 0.0f, 1.0f
-  }; // The last 3 values of each row are color data
-  
   glGenVertexArrays(1, VAO);
   glBindVertexArray(*VAO);
+
+  float vertices[] = {
+    -1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 
+    0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 
+    1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f
+  }; // The last 3 values of each row are colors 
+  
+  float texture[] = {
+    0.0f, 0.0f,
+    1.0f, 0.0f,
+    0.5f, 1.0f
+  };
 
   unsigned int VBO;
   glGenBuffers(1, &VBO);
@@ -47,7 +83,7 @@ Shader returnTriangleShader(const std::string& fragmentShaderPath, const std::st
 }
 
 Shader returnRectangleShader(const unsigned int (&indices)[6], 
-                                   const float (&vertices)[12],
+                                   const float (&vertices)[32],
                                    const std::string &vertexShaderPath,
                                    const std::string &fragmentShaderPath,
                                    unsigned int * VAO,
@@ -60,14 +96,25 @@ Shader returnRectangleShader(const unsigned int (&indices)[6],
   glGenBuffers(1, &VBO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0);
+  // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+  // glEnableVertexAttribArray(0);
+  
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 
+                        8 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0); // Position data
+
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 
+                        8 * sizeof(float), (void *)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1); // Color data
+  
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 
+                        8 * sizeof(float), (void *)(6 * sizeof(float)));
+  glEnableVertexAttribArray(2); // Texture data
 
   unsigned int EBO;
   glGenBuffers(1, &EBO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
   
   Shader shaderProgram(Shader(Shader(vertexShaderPath, GL_VERTEX_SHADER), 
                         Shader(fragmentShaderPath, GL_FRAGMENT_SHADER)));
@@ -103,12 +150,18 @@ int main() {
   glViewport(0, 0, 800, 600);
 
   glfwSetFramebufferSizeCallback(w, framebuffer_size_callback);
+  
+  float border[] = {
+    1.0f, 1.0f, 1.0f, 1.0f
+  };
 
-  /*float firstRectangleVertices[] = {
-    -0.5f, 0.5f, 0.0f, // Top left
-    -0.5f, -0.5f, 0.0f, // Bottom left
-    0.0f, 0.5f, 0.0f, // Top right
-    0.0f, -0.5f, 0.0f // Bottom right
+  unsigned textureId = createTexture("../textures/container.jpg", border);
+
+  float firstRectangleVertices[] = {
+    -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, // Top left
+    -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,// Bottom left
+    0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,// Top right
+    0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f // Bottom right
   };
 
   unsigned int firstRectangleIndices[] = {
@@ -116,7 +169,15 @@ int main() {
     2, 3, 1
   };
 
-float secondRectangleVertices[] = {
+  unsigned int firstVAO;
+  Shader firstRectangleShader = returnRectangleShader(firstRectangleIndices, 
+                                                            firstRectangleVertices, 
+                                                             "../shaders/vertex_shader_texture_example.glsl",
+                                                            "../shaders/fragment_shader_texture_example.glsl",
+                                                            &firstVAO,
+                                                            0);
+  
+  /*float secondRectangleVertices[] = {
     0.0f, 0.5f, 0.0f, // Top left
     0.0f, -0.5f, 0.0f, // Bottom left
     0.5f, 0.5f, 0.0f, // Top right
@@ -128,15 +189,7 @@ float secondRectangleVertices[] = {
     2, 3, 1
   };
   
-  unsigned int firstVAO;
   unsigned int secondVAO;
-
-  Shader firstRectangleShader = returnRectangleShader(firstRectangleIndices, 
-                                                            firstRectangleVertices, 
-                                                             "../shaders/vertex_shader.glsl",
-                                                            "../shaders/fragment_shader.glsl",
-                                                            &firstVAO,
-                                                            0);
 
   Shader secondRectangleShader = returnRectangleShader(secondRectangleIndices, 
                                                              secondRectangleVertices, 
@@ -145,35 +198,37 @@ float secondRectangleVertices[] = {
                                                              &secondVAO,
                                                              1);
   
-  glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
   
-  */
+  
   unsigned int VAO;
 
   Shader triangleShader = returnTriangleShader("../shaders/fragment_shader_multicolor_example.glsl", 
                                                      "../shaders/vertex_shader_multicolor_example.glsl", 
                                                      &VAO);
+  */
 
   while (!glfwWindowShouldClose(w) ) {
     // std::cout << firstRectangleShader << ":" << secondRectangleShader << std::endl;
     // std::cout << firstVAO << ":" << secondVAO << std::endl;
 
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     processInput(w);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    /*firstRectangleShader.useShader();
+    firstRectangleShader.useShader();
     glBindVertexArray(firstVAO);
+    glBindTexture(GL_TEXTURE_2D, textureId);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     
+    /*
     secondRectangleShader.useShader();
     glBindVertexArray(secondVAO);  
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     
     glBindVertexArray(0);  
     
-    */
     triangleShader.useShader();
    
     int offSet = glGetUniformLocation(triangleShader.getShaderId(), "offSet");
@@ -181,7 +236,8 @@ float secondRectangleVertices[] = {
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
-    
+    */
+
     glfwSwapBuffers(w);
     glfwPollEvents();
   }
