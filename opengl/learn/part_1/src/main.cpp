@@ -7,7 +7,10 @@
 #include <stb_image/stb_image.hpp>
 #include "classes/Shader.hpp"
 
-unsigned int createTexture(const char * texturePath, const float (&borderColor)[4]) {
+unsigned int createTexture(const char * texturePath, 
+                           const float (&borderColor)[4], 
+                           const bool flipImage, 
+                           const GLenum format) {
   glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
   glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -16,9 +19,10 @@ unsigned int createTexture(const char * texturePath, const float (&borderColor)[
   glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
   
+  stbi_set_flip_vertically_on_load(flipImage);
   int width, height, channels;
   unsigned char * textureData = stbi_load(texturePath, &width, &height, &channels, 0);
-  
+
   if (textureData == nullptr) {
     std::cerr << "Error loding texture data!" << std::endl;
     exit(1);
@@ -28,7 +32,7 @@ unsigned int createTexture(const char * texturePath, const float (&borderColor)[
   glGenTextures(1, &textureId);
   glBindTexture(GL_TEXTURE_2D, textureId);
   
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, format, GL_UNSIGNED_BYTE, textureData);
   glGenerateMipmap(GL_TEXTURE_2D);
   
   stbi_image_free(textureData);
@@ -155,8 +159,9 @@ int main() {
     1.0f, 1.0f, 1.0f, 1.0f
   };
 
-  unsigned textureId = createTexture("../textures/container.jpg", border);
-
+  unsigned textureId = createTexture("../textures/container.jpg", border, false, GL_RGB);
+  unsigned textureId2 = createTexture("../textures/awesomeface.png", border, true, GL_RGBA);
+  
   float firstRectangleVertices[] = {
     -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, // Top left
     -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,// Bottom left
@@ -176,7 +181,10 @@ int main() {
                                                             "../shaders/fragment_shader_texture_example.glsl",
                                                             &firstVAO,
                                                             0);
-  
+  firstRectangleShader.useShader();
+  glUniform1i(glGetUniformLocation(firstRectangleShader.getShaderId(), "texture1"), 0);
+  glUniform1i(glGetUniformLocation(firstRectangleShader.getShaderId(), "texture2"), 1);
+
   /*float secondRectangleVertices[] = {
     0.0f, 0.5f, 0.0f, // Top left
     0.0f, -0.5f, 0.0f, // Bottom left
@@ -218,8 +226,14 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     firstRectangleShader.useShader();
-    glBindVertexArray(firstVAO);
+    
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureId);
+    
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, textureId2);
+
+    glBindVertexArray(firstVAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     
     /*
