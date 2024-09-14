@@ -8,6 +8,8 @@ uniform sampler2D texture1;
 uniform sampler2D texture2;
 
 void main() {
+  vec2 flippedCoords = vec2(-1, 1) * textureCoords;
+
   fragColor = mix(texture(texture1, textureCoords),
-                  texture(texture2, textureCoords), 0.5f);
+                  texture(texture2, flippedCoords), 0.5f);
 }
