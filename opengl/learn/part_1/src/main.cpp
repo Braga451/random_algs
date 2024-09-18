@@ -13,8 +13,8 @@ unsigned int createTexture(const char * texturePath,
                            const GLenum format) {
   glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
-  glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-  glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   
   glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
@@ -163,10 +163,10 @@ int main() {
   unsigned textureId2 = createTexture("../textures/awesomeface.png", border, true, GL_RGBA);
   
   float firstRectangleVertices[] = {
-    -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, // Top left
+    -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 2.0f, // Top left
     -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,// Bottom left
-    0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,// Top right
-    0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f // Bottom right
+    0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 2.0f, 2.0f,// Top right
+    0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 2.0f, 0.0f // Bottom right
   };
 
   unsigned int firstRectangleIndices[] = {
