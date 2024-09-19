@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -6,6 +7,11 @@
 #include <string>
 #include <stb_image/stb_image.hpp>
 #include "classes/Shader.hpp"
+
+typedef struct {
+  unsigned int shaderId;
+  float o;
+}Opacity;
 
 unsigned int createTexture(const char * texturePath, 
                            const float (&borderColor)[4], 
@@ -16,8 +22,8 @@ unsigned int createTexture(const char * texturePath,
   glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   
-  glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); 
+  glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glad_glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
   
   stbi_set_flip_vertically_on_load(flipImage);
   int width, height, channels;
@@ -44,9 +50,29 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
-void processInput(GLFWwindow *window) {
+void processInput(GLFWwindow *window, void (*f)(GLFWwindow * w, void * args), void * args) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
+  
+  if (f != nullptr) {
+    f(window, args);
+  }
+}
+
+void modifyTextureOpacity(GLFWwindow * w, void * args) {
+  Opacity * op = (Opacity *) args;
+  int uniformLocation = glGetUniformLocation(op->shaderId, "texture2Opacity");
+
+  if (glfwGetKey(w, GLFW_KEY_UP) == GLFW_PRESS)
+    op->o++;
+
+  if (glfwGetKey(w, GLFW_KEY_DOWN) == GLFW_PRESS)
+    op->o--;
+  
+  op->o = 1/(0.8643 + std::exp(-op->o));
+
+  std::cout << op->o << std::endl;
+  glUniform1f(uniformLocation, op->o);
 }
 
 Shader returnTriangleShader(const std::string& fragmentShaderPath, const std::string& vertexShaderPath, unsigned int * VAO) {
@@ -214,19 +240,23 @@ int main() {
                                                      "../shaders/vertex_shader_multicolor_example.glsl", 
                                                      &VAO);
   */
-
+  
+  Opacity * o = new Opacity;
+  
+  o->o = 0.5;
+  o->shaderId = firstRectangleShader.getShaderId();
+  
   while (!glfwWindowShouldClose(w) ) {
     // std::cout << firstRectangleShader << ":" << secondRectangleShader << std::endl;
     // std::cout << firstVAO << ":" << secondVAO << std::endl;
 
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    processInput(w);
+    firstRectangleShader.useShader();
+    processInput(w, &modifyTextureOpacity, o);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    firstRectangleShader.useShader();
-    
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureId);
     
