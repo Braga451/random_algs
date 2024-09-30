@@ -396,10 +396,11 @@ int main() {
     
     int i = 0;
     for (auto& pos : cubePositions) {
+      std::cout << i % 3 << std::endl;
       glm::mat4 model = glm::mat4(1.0f);
       model = glm::translate(model, pos);
-      float theta = 20.0f * i;
-      model = glm::rotate(model, glm::radians(theta), glm::vec3(1.0f, 0.3f, 0.5f));
+      float theta = i % 3 == 0 ? (float)glfwGetTime() * 50.0f : 20.0f * i;
+      model = glm::rotate(model, glm::radians(theta), glm::vec3(0.0f, 1.0f, 0.0f));
       int modelLoc = glGetUniformLocation(cube.getShaderId(), "model");
       glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
       glDrawArrays(GL_TRIANGLES, 0, 36);
