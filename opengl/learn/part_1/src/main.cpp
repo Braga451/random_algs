@@ -175,6 +175,77 @@ Shader returnRectangleShader(const unsigned int (&indices)[6],
   return shaderProgram;
 }
 
+Shader returnCubeShader(const std::string &vertexShaderPath,
+                                   const std::string &fragmentShaderPath,
+                                   unsigned int * VAO) {
+  float vertices[] = {
+-0.5f, -0.5f, -0.5f,0.0f, 0.0f,
+ 0.5f, -0.5f, -0.5f,1.0f, 0.0f,
+0.5f, 0.5f, -0.5f,1.0f, 1.0f,
+0.5f, 0.5f, -0.5f,1.0f, 1.0f,
+-0.5f, 0.5f, -0.5f,0.0f, 1.0f,
+-0.5f, -0.5f, -0.5f,0.0f, 0.0f,
+
+-0.5f, -0.5f,0.5f,0.0f, 0.0f,
+0.5f, -0.5f,0.5f,1.0f, 0.0f,
+0.5f, 0.5f,0.5f,1.0f, 1.0f,
+0.5f, 0.5f,0.5f,1.0f, 1.0f,
+-0.5f, 0.5f,0.5f,0.0f, 1.0f,
+-0.5f, -0.5f,0.5f,0.0f, 0.0f,
+
+-0.5f, 0.5f, 0.5f,1.0f, 0.0f,
+-0.5f, 0.5f, -0.5f,1.0f, 1.0f,
+-0.5f, -0.5f, -0.5f,0.0f, 1.0f,
+-0.5f, -0.5f, -0.5f,0.0f, 1.0f,
+-0.5f, -0.5f, 0.5f,0.0f, 0.0f,
+-0.5f, 0.5f, 0.5f,1.0f, 0.0f,
+
+0.5f, 0.5f, 0.5f,1.0f, 0.0f,
+0.5f, 0.5f, -0.5f,1.0f, 1.0f,
+0.5f, -0.5f, -0.5f,0.0f, 1.0f,
+0.5f, -0.5f, -0.5f,0.0f, 1.0f,
+0.5f, -0.5f, 0.5f,0.0f, 0.0f,
+0.5f, 0.5f, 0.5f,1.0f, 0.0f,
+
+-0.5f, -0.5f, -0.5f,0.0f, 1.0f,
+0.5f, -0.5f, -0.5f,1.0f, 1.0f,
+0.5f, -0.5f, 0.5f,1.0f, 0.0f,
+0.5f, -0.5f, 0.5f,1.0f, 0.0f,
+-0.5f, -0.5f, 0.5f,0.0f, 0.0f,
+-0.5f, -0.5f, -0.5f,0.0f, 1.0f,
+
+-0.5f,0.5f, -0.5f,0.0f, 1.0f,
+0.5f,0.5f, -0.5f,1.0f, 1.0f,
+0.5f,0.5f, 0.5f,1.0f, 0.0f,
+0.5f,0.5f, 0.5f,1.0f, 0.0f,
+-0.5f,0.5f, 0.5f,0.0f, 0.0f,
+-0.5f,0.5f, -0.5f,0.0f, 1.0f
+};
+
+  glGenVertexArrays(1, VAO);
+  glBindVertexArray(*VAO);
+  
+  unsigned int VBO;
+  glGenBuffers(1, &VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 
+                        5 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0); // Position data
+  
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 
+                        5 * sizeof(float), (void *)(3 * sizeof(float)));
+  glEnableVertexAttribArray(2); // Texture data
+  
+  Shader shaderProgram(Shader(Shader(vertexShaderPath, GL_VERTEX_SHADER), 
+                        Shader(fragmentShaderPath, GL_FRAGMENT_SHADER)));
+  
+  glBindVertexArray(0);
+
+  return shaderProgram;
+
+}
 
 int main() {
   glfwInit();
@@ -209,7 +280,7 @@ int main() {
   unsigned textureId = createTexture("../textures/container.jpg", border, false, GL_RGB);
   unsigned textureId2 = createTexture("../textures/awesomeface.png", border, true, GL_RGBA);
   
-  float firstRectangleVertices[] = {
+  /*float firstRectangleVertices[] = {
     -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, // Top left
     -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,// Bottom left
     0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,// Top right
@@ -229,8 +300,8 @@ int main() {
                                                             &firstVAO,
                                                             0);
   firstRectangleShader.useShader();
-  glUniform1i(glGetUniformLocation(firstRectangleShader.getShaderId(), "texture1"), 0);
-  glUniform1i(glGetUniformLocation(firstRectangleShader.getShaderId(), "texture2"), 1);
+  
+  */
 
   /*float secondRectangleVertices[] = {
     0.0f, 0.5f, 0.0f, // Top left
@@ -272,26 +343,48 @@ int main() {
   glm::mat4 projection;
   
   returnModelAndViewAndProjectionMatrices(&model, &view, &projection);
+  unsigned int VAO;
+  Shader cube = returnCubeShader("../shaders/vertex_shader_mvp_example.glsl",
+                                 "../shaders/fragment_shader_texture_example.glsl", 
+                                 &VAO);
+  
+  cube.useShader();
+  glUniform1i(glGetUniformLocation(cube.getShaderId(), "texture1"), 0);
+  glUniform1i(glGetUniformLocation(cube.getShaderId(), "texture2"), 1);
+
+  glEnable(GL_DEPTH_TEST);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  
+  glm::vec3 cubePositions[] = {
+  glm::vec3( 0.0f, 0.0f, 0.0f),
+  glm::vec3( 2.0f, 5.0f, -15.0f),
+  glm::vec3(-1.5f, -2.2f, -2.5f),
+  glm::vec3(-3.8f, -2.0f, -12.3f),
+  glm::vec3( 2.4f, -0.4f, -3.5f),
+  glm::vec3(-1.7f, 3.0f, -7.5f),
+  glm::vec3( 1.3f, -2.0f, -2.5f),
+  glm::vec3( 1.5f, 2.0f, -2.5f),
+  glm::vec3( 1.5f, 0.2f, -1.5f),
+  glm::vec3(-1.3f, 1.0f, -1.5f)
+  };
 
   while (!glfwWindowShouldClose(w)) {
     // std::cout << firstRectangleShader << ":" << secondRectangleShader << std::endl;
     // std::cout << firstVAO << ":" << secondVAO << std::endl;
 
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    firstRectangleShader.useShader();
-    int modelLoc = glGetUniformLocation(firstRectangleShader.getShaderId(), "model");
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-
-    int viewLoc = glGetUniformLocation(firstRectangleShader.getShaderId(), "view");
+    cube.useShader();
+    
+    int viewLoc = glGetUniformLocation(cube.getShaderId(), "view");
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     
-    int projectionLoc = glGetUniformLocation(firstRectangleShader.getShaderId(), "projection");
+    int projectionLoc = glGetUniformLocation(cube.getShaderId(), "projection");
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
     processInput(w, nullptr, nullptr);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureId);
@@ -299,8 +392,21 @@ int main() {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, textureId2);
 
-    glBindVertexArray(firstVAO);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(VAO);
+    
+    int i = 0;
+    for (auto& pos : cubePositions) {
+      glm::mat4 model = glm::mat4(1.0f);
+      model = glm::translate(model, pos);
+      float theta = 20.0f * i;
+      model = glm::rotate(model, glm::radians(theta), glm::vec3(1.0f, 0.3f, 0.5f));
+      int modelLoc = glGetUniformLocation(cube.getShaderId(), "model");
+      glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+      glDrawArrays(GL_TRIANGLES, 0, 36);
+      i++;
+    }
+
+    // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     
     /*
     secondRectangleShader.useShader();
@@ -320,6 +426,8 @@ int main() {
 
     glfwSwapBuffers(w);
     glfwPollEvents();
+
+    model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
   }
 
   glfwTerminate();
