@@ -43,3 +43,32 @@
 - Uniforms are global
 
 - Texture coordinates go to (0,0) to (1,1), same logic for screen coordinates but having zero as minimal
+
+- Important coordinates system:
+  1. Local (object) space
+  2. World space
+  3. View (eye) space
+  4. Clip space
+  5. Screen space
+
+- To transform one space to another it's used matrix's (linear) transformations.
+
+- Coordinates order: Local space =(Model matrix)> World space =(View matrix)> View space =(Projection matrix)> Clip space =(Viewport transform)> Screen space
+
+- Local space is where the object beings in (generally (0, 0, 0)).
+
+- World space is the coordinates of all vertices relative to a world. So we basically position any object with this, and a model matrix is used for that.
+
+- Model matrix is a transformation matrix that translate, scales and/or rotates objects to place in the world at a location/orientation they belong to
+
+- View (camera/eye) space is the result of transformation the world space coordinates to coordinates that are in front of the user's view. These combined transformations are generally stored inside a view matrix.
+
+- At the end of each vertex shader run, OpenGL expects the coordinates to be within a specific range (-1.0, 1.0) and any coordinate that falls outside this range is clipped (discarded). To convert vertex coordinates from view to clip space it's used the projection matrix that specifies a range of coordinates. The projection matrix then transforms coordinates within this specified range to normalized device coordinates.
+
+- This viewing box a projection matrix creates is called frustum and each coordinates that ends up inside this frustum will end up on the user's screen. At the end, a final operation in realized with the clip space coordinates, where x, y and z components of the position vectors are divided by the vectors homogeneous w. This step is performed automatically at the end of the vertex shader step
+
+- The projection matrix can take two different forms, an orthographic projection matrix or perspective projection matrix
+
+- $V_{clip} = M_{projection} * M_{view} * M_{model} * V_{local}$
+
+-

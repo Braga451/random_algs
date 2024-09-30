@@ -1,10 +1,18 @@
 #include <cstdlib>
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_float4x4.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/trigonometric.hpp>
 #include <iostream>
 #include <cmath>
 #include <ostream>
 #include <string>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <stb_image/stb_image.hpp>
 #include "classes/Shader.hpp"
 
@@ -12,6 +20,19 @@ typedef struct {
   unsigned int shaderId;
   float o;
 }Opacity;
+
+void returnModelAndViewAndProjectionMatrices(glm::mat4 * m, glm::mat4 * v, glm::mat4 * p) {
+  glm::mat4 model = glm::mat4(1.0f);
+  glm::mat4 view = glm::mat4(1.0f);
+  glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f/600.0f, 0.1f, 100.0f);
+
+  model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+  view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+  
+  *m = model;
+  *v = view;
+  *p = projection;
+}
 
 unsigned int createTexture(const char * texturePath, 
                            const float (&borderColor)[4], 
@@ -203,7 +224,7 @@ int main() {
   unsigned int firstVAO;
   Shader firstRectangleShader = returnRectangleShader(firstRectangleIndices, 
                                                             firstRectangleVertices, 
-                                                             "../shaders/vertex_shader_texture_example.glsl",
+                                                             "../shaders/vertex_shader_mvp_example.glsl",
                                                             "../shaders/fragment_shader_texture_example.glsl",
                                                             &firstVAO,
                                                             0);
@@ -241,18 +262,33 @@ int main() {
                                                      &VAO);
   */
   
-  Opacity * o = new Opacity;
+  /* Opacity * o = new Opacity;
   
   o->o = 0.5;
-  o->shaderId = firstRectangleShader.getShaderId();
+  o->shaderId = firstRectangleShader.getShaderId();*/
   
-  while (!glfwWindowShouldClose(w) ) {
+  glm::mat4 model;
+  glm::mat4 view;
+  glm::mat4 projection;
+  
+  returnModelAndViewAndProjectionMatrices(&model, &view, &projection);
+
+  while (!glfwWindowShouldClose(w)) {
     // std::cout << firstRectangleShader << ":" << secondRectangleShader << std::endl;
     // std::cout << firstVAO << ":" << secondVAO << std::endl;
 
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     firstRectangleShader.useShader();
-    processInput(w, &modifyTextureOpacity, o);
+    int modelLoc = glGetUniformLocation(firstRectangleShader.getShaderId(), "model");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+    int viewLoc = glGetUniformLocation(firstRectangleShader.getShaderId(), "view");
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    
+    int projectionLoc = glGetUniformLocation(firstRectangleShader.getShaderId(), "projection");
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+    processInput(w, nullptr, nullptr);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
