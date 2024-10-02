@@ -71,4 +71,16 @@
 
 - $V_{clip} = M_{projection} * M_{view} * M_{model} * V_{local}$
 
--
+- $LookAt =
+\begin{bmatrix}
+  R_{x} & R_{y} & R_{z} & 0\\
+  U_{x} & U_{y} & U_{z} & 0\\
+  R_{x} & R_{y} & R_{z} & 0\\
+  0 & 0 & 0 & 1
+\end{bmatrix} *
+\begin{bmatrix}
+  1 & 0 & 0 & -P_{x}\\
+  0 & 1 & 0 & -P_{y}\\
+  0 & 0 & 1 & -P_{z}\\
+  0 & 0 & 0 & 1
+\end{bmatrix}$, where R is the right vector, U is the up vector, D is the directional vector and P is the camera position vector

@@ -5,6 +5,7 @@
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/vector_float3.hpp>
+#include <glm/geometric.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/trigonometric.hpp>
 #include <iostream>
@@ -20,6 +21,31 @@ typedef struct {
   unsigned int shaderId;
   float o;
 }Opacity;
+
+typedef struct {
+  glm::vec3 cameraPos;
+  glm::vec3 cameraTarget;
+  glm::vec3 cameraDirection;
+  glm::vec3 cameraRight;
+  glm::vec3 cameraFront;
+  glm::vec3 cameraUp;
+}Camera; // should become a class later
+
+void updateCamera(Camera * c) {
+  c->cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+  c->cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+  c->cameraDirection = glm::normalize(c->cameraPos - c->cameraTarget);
+  c->cameraRight = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), c->cameraDirection));
+  c->cameraUp = glm::cross(c->cameraDirection, c->cameraRight);
+}
+
+Camera * returnCamera() {
+  Camera * c = new Camera;
+  
+  updateCamera(c);
+ 
+  return c;
+}
 
 void returnModelAndViewAndProjectionMatrices(glm::mat4 * m, glm::mat4 * v, glm::mat4 * p) {
   glm::mat4 model = glm::mat4(1.0f);
@@ -367,7 +393,9 @@ int main() {
   glm::vec3( 1.5f, 0.2f, -1.5f),
   glm::vec3(-1.3f, 1.0f, -1.5f)
   };
+  
 
+  const float radius = 10.0f;
   while (!glfwWindowShouldClose(w)) {
     // std::cout << firstRectangleShader << ":" << secondRectangleShader << std::endl;
     // std::cout << firstVAO << ":" << secondVAO << std::endl;
@@ -394,17 +422,22 @@ int main() {
 
     glBindVertexArray(VAO);
     
-    int i = 0;
+    float camX = sin(glfwGetTime()) * radius;
+    float camZ = cos(glfwGetTime()) * radius;
+    
+    view = glm::lookAt(glm::vec3(camX, 0.0f, camZ), 
+                       glm::vec3(0.0f, 0.0f, 0.0f),
+                       glm::vec3(0.0f, 1.0f, 0.0f)
+                       );
+
     for (auto& pos : cubePositions) {
-      std::cout << i % 3 << std::endl;
       glm::mat4 model = glm::mat4(1.0f);
       model = glm::translate(model, pos);
-      float theta = i % 3 == 0 ? (float)glfwGetTime() * 50.0f : 20.0f * i;
-      model = glm::rotate(model, glm::radians(theta), glm::vec3(0.0f, 1.0f, 0.0f));
+      float theta = (float)glfwGetTime() * 50.0f ;
+      model = glm::rotate(model, glm::radians(theta), glm::vec3(0.4f, 0.0f, 1.0f));
       int modelLoc = glGetUniformLocation(cube.getShaderId(), "model");
       glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
       glDrawArrays(GL_TRIANGLES, 0, 36);
-      i++;
     }
 
     // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
