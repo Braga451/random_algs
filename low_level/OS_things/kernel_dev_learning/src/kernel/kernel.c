@@ -58,6 +58,17 @@ size_t terminal_column;
 uint8_t terminal_color;
 uint16_t* terminal_buffer;
 
+void terminal_scroll_up(void) {
+    for (size_t y = 1; y < VGA_HEIGHT; y++) {
+        for (size_t x = 0; x < VGA_WIDTH; x++) {
+            const size_t currentRowIndex = y * VGA_WIDTH + x;
+            const size_t prevRowIndex = (y - 1) * VGA_WIDTH + x;
+            terminal_buffer[prevRowIndex] = terminal_buffer[currentRowIndex];
+            if (y == VGA_HEIGHT - 1) terminal_buffer[currentRowIndex] = vga_entry(' ', terminal_color);
+        }
+    }
+}
+
 void terminal_initialize(void) 
 {
 	terminal_row = 0;
@@ -85,11 +96,13 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y)
 
 void terminal_putchar(char c) 
 {
-	terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
-	if (++terminal_column == VGA_WIDTH) {
+	if (c != '\n') terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
+	if (++terminal_column == VGA_WIDTH || c == '\n') {
 		terminal_column = 0;
-		if (++terminal_row == VGA_HEIGHT)
-			terminal_row = 0;
+		if (++terminal_row == VGA_HEIGHT) {
+            terminal_scroll_up();
+            terminal_row = VGA_HEIGHT - 1;
+        }
 	}
 }
 
@@ -109,6 +122,9 @@ void kernel_main(void)
 	/* Initialize terminal interface */
 	terminal_initialize();
 
-	/* Newline support is left as an exercise. */
-	terminal_writestring("Hello, kernel World!\n");
+    for (int i = 0; i < VGA_HEIGHT - 1; i++) {
+        terminal_putchar(48 + i);
+        terminal_putchar('\n');
+    }
+    terminal_writestring("25 Linha final");
 }
