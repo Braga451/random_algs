@@ -1,0 +1,1 @@
+# Literally, this is just a "small" project to understand OS basis. Do not expect something really functional from here (to be fair, it isn't exactally a project, it's just BareBones skeleton OS https://wiki.osdev.org/Bare\_Bones)
